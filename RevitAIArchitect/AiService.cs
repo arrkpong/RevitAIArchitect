@@ -2,24 +2,23 @@ using System;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-// using Newtonsoft.Json; // We might need to add Newtonsoft.Json if we want robust parsing, but for now simple string manip for demo
 
 namespace RevitAIArchitect
 {
     public class AiService
     {
         private static readonly HttpClient client = new HttpClient();
-        // TODO: Replace with your actual API Key or load from config
-        private const string ApiKey = "YOUR_OPENAI_API_KEY_HERE"; 
         private const string ApiUrl = "https://api.openai.com/v1/chat/completions";
+        
+        // API Key is now set from UI
+        public string ApiKey { get; set; } = string.Empty;
 
         public async Task<string> GetReplyAsync(string userMessage)
         {
-            // For safety, if no key is set, return a mock response
-            if (ApiKey == "YOUR_OPENAI_API_KEY_HERE")
+            // Check if API key is set
+            if (string.IsNullOrEmpty(ApiKey))
             {
-                await Task.Delay(1000); // Simulate network delay
-                return "I am ready to help! Please add your OpenAI API Key in AiService.cs to connect to the real AI. (Mock Response)";
+                return "Please enter your OpenAI API Key in the settings above.";
             }
 
             try
@@ -34,15 +33,15 @@ namespace RevitAIArchitect
                     }
                 };
 
-                // Simple JSON serialization (using System.Text.Json would require reference update or newer .NET)
-                // For simplicity/compatibility let's use a quick string format or check if we have System.Text.Json available in .NET 8 (we do!)
-                
                 string json = System.Text.Json.JsonSerializer.Serialize(requestBody);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ApiKey);
+                // Use fresh request with authorization header
+                using var request = new HttpRequestMessage(HttpMethod.Post, ApiUrl);
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", ApiKey);
+                request.Content = content;
 
-                var response = await client.PostAsync(ApiUrl, content);
+                var response = await client.SendAsync(request);
                 string responseString = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
@@ -54,7 +53,7 @@ namespace RevitAIArchitect
                                   .GetProperty("choices")[0]
                                   .GetProperty("message")
                                   .GetProperty("content")
-                                  .GetString();
+                                  .GetString() ?? "No response received.";
                     }
                 }
                 else
