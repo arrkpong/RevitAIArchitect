@@ -37,6 +37,28 @@ namespace RevitAIArchitect
             
             sb.AppendLine($"Project: {_doc.Title}");
             sb.AppendLine($"Path: {_doc.PathName ?? "Not saved"}");
+            try
+            {
+                var app = _doc.Application;
+                sb.AppendLine($"Revit Version: {app.VersionName} ({app.VersionNumber})");
+            }
+            catch
+            {
+                sb.AppendLine("Revit Version: Unknown");
+            }
+            try
+            {
+                var activeView = _doc.ActiveView;
+                sb.AppendLine($"Active View: {activeView?.Name ?? "Unknown"}");
+                if (activeView?.get_Parameter(BuiltInParameter.VIEW_PHASE) is Parameter phaseParam && phaseParam.HasValue)
+                {
+                    sb.AppendLine($"Active Phase: {phaseParam.AsValueString() ?? "Unknown"}");
+                }
+            }
+            catch
+            {
+                sb.AppendLine("Active View: Unknown");
+            }
             
             try
             {
@@ -149,6 +171,7 @@ namespace RevitAIArchitect
                         .OrderByDescending(g => g.Count())
                         .Take(10);
 
+                    int warningTypes = groupedWarnings.Count();
                     foreach (var group in groupedWarnings)
                     {
                         sb.AppendLine($"{group.Key} ({group.Count()}):");
@@ -170,8 +193,8 @@ namespace RevitAIArchitect
                         if (group.Count() > 5)
                             sb.AppendLine($"   ... and {group.Count() - 5} more");
                         sb.AppendLine();
-                        totalIssues += group.Count();
                     }
+                    totalIssues += warningTypes;
                 }
                 else
                 {
@@ -353,7 +376,8 @@ namespace RevitAIArchitect
                     {
                         string typeName = elem.GetType().Name;
                         string name = elem.Name ?? "Unnamed";
-                        sb.AppendLine($"- [{typeName}] {name} (ID: {id.Value})");
+                        string category = elem.Category?.Name ?? "Unknown";
+                        sb.AppendLine($"- [{category}] {name} ({typeName}) (ID: {id.Value})");
                     }
                 }
 
