@@ -1,3 +1,4 @@
+using Autodesk.Revit.UI;
 using System;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -11,6 +12,7 @@ namespace RevitAIArchitect
         private IAiProvider _currentProvider;
         private readonly OpenAiProvider _openAiProvider;
         private readonly GeminiProvider _geminiProvider;
+        private readonly RevitContextService _contextService;
 
         public ObservableCollection<string> Messages { get; set; }
 
@@ -24,13 +26,16 @@ namespace RevitAIArchitect
         private static readonly string ProviderPath = Path.Combine(SettingsDir, "provider.txt");
         private static readonly string GeminiModelPath = Path.Combine(SettingsDir, "gemini_model.txt");
 
-        public ChatWindow()
+        public ChatWindow() : this(null) { }
+
+        public ChatWindow(UIDocument uidoc)
         {
             InitializeComponent();
 
             _openAiProvider = new OpenAiProvider();
             _geminiProvider = new GeminiProvider();
             _currentProvider = _openAiProvider; // Default
+            _contextService = new RevitContextService(uidoc);
 
             Messages = new ObservableCollection<string>();
             ChatHistory.ItemsSource = Messages;
@@ -40,7 +45,8 @@ namespace RevitAIArchitect
 
             // Add initial welcome message
             string modelInfo = _currentProvider is GeminiProvider gp ? $" (Model: {gp.Model})" : "";
-            Messages.Add($"AI: Welcome! Using {_currentProvider.Name}{modelInfo}. Enter your API Key above if needed.");
+            string contextInfo = _contextService.HasDocument ? " [Revit Context Available]" : " [No Revit Document]";
+            Messages.Add($"AI: Welcome! Using {_currentProvider.Name}{modelInfo}.{contextInfo}");
         }
 
         private void LoadSettings()
@@ -230,12 +236,21 @@ namespace RevitAIArchitect
 
             try
             {
+                // Build context if enabled
+                string context = null;
+                if (IncludeContextCheck.IsChecked == true && _contextService.HasDocument)
+                {
+                    context = _contextService.BuildContextString();
+                    context += _contextService.GetSelectionInfo();
+                }
+
                 // Show model info for Gemini
                 string modelInfo = _currentProvider is GeminiProvider gp ? $" [{gp.Model}]" : "";
+                string contextIndicator = context != null ? " 📋" : "";
                 
-                // Call AI Service
-                string aiResponse = await _currentProvider.GetReplyAsync(userMessage);
-                Messages.Add($"AI ({_currentProvider.Name}{modelInfo}): {aiResponse}");
+                // Call AI Service with context
+                string aiResponse = await _currentProvider.GetReplyAsync(userMessage, context);
+                Messages.Add($"AI ({_currentProvider.Name}{modelInfo}){contextIndicator}: {aiResponse}");
             }
             catch (Exception ex)
             {

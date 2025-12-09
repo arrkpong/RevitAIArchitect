@@ -5,9 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RevitAIArchitect"
         mc:Ignorable="d"
-        Title="Revit AI Assistant" Height="560" Width="420" WindowStartupLocation="CenterScreen" Topmost="True">
+        Title="Revit AI Assistant" Height="580" Width="420" WindowStartupLocation="CenterScreen" Topmost="True">
     <Grid Margin="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -47,7 +48,7 @@
         </Border>
 
         <!-- API Key Section -->
-        <Border Grid.Row="2" Background="#E8F5E9" CornerRadius="5" Padding="8" Margin="0,0,0,10">
+        <Border Grid.Row="2" Background="#E8F5E9" CornerRadius="5" Padding="8" Margin="0,0,0,5">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -60,8 +61,13 @@
             </Grid>
         </Border>
 
+        <!-- Context Toggle -->
+        <Border Grid.Row="3" Background="#FCE4EC" CornerRadius="5" Padding="8" Margin="0,0,0,10">
+            <CheckBox x:Name="IncludeContextCheck" Content="Include Revit Project Context" IsChecked="True" FontWeight="Bold"/>
+        </Border>
+
         <!-- Chat History -->
-        <ListView x:Name="ChatHistory" Grid.Row="3" Margin="0,0,0,10" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListView x:Name="ChatHistory" Grid.Row="4" Margin="0,0,0,10" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Border Background="#F0F0F0" CornerRadius="5" Padding="8" Margin="0,2">
@@ -72,7 +78,7 @@
         </ListView>
 
         <!-- Input Area -->
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

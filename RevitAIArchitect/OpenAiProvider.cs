@@ -13,7 +13,12 @@ namespace RevitAIArchitect
         public string Name => "OpenAI";
         public string ApiKey { get; set; } = string.Empty;
 
-        public async Task<string> GetReplyAsync(string userMessage)
+        public Task<string> GetReplyAsync(string userMessage)
+        {
+            return GetReplyAsync(userMessage, null);
+        }
+
+        public async Task<string> GetReplyAsync(string userMessage, string context)
         {
             if (string.IsNullOrEmpty(ApiKey))
             {
@@ -22,12 +27,19 @@ namespace RevitAIArchitect
 
             try
             {
+                // Build system prompt with context
+                string systemPrompt = "You are a helpful assistant for Autodesk Revit. You help architects and engineers with their Revit models.";
+                if (!string.IsNullOrEmpty(context))
+                {
+                    systemPrompt += $"\n\nHere is the current Revit project context:\n{context}";
+                }
+
                 var requestBody = new
                 {
                     model = "gpt-4o",
                     messages = new[]
                     {
-                        new { role = "system", content = "You are a helpful assistant for Autodesk Revit. You help architects and engineers with their Revit models." },
+                        new { role = "system", content = systemPrompt },
                         new { role = "user", content = userMessage }
                     }
                 };

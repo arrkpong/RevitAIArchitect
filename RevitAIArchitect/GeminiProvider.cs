@@ -23,7 +23,12 @@ namespace RevitAIArchitect
             "gemini-2.5-flash"           // Stable
         };
 
-        public async Task<string> GetReplyAsync(string userMessage)
+        public Task<string> GetReplyAsync(string userMessage)
+        {
+            return GetReplyAsync(userMessage, null);
+        }
+
+        public async Task<string> GetReplyAsync(string userMessage, string context)
         {
             if (string.IsNullOrEmpty(ApiKey))
             {
@@ -35,6 +40,14 @@ namespace RevitAIArchitect
                 // Gemini API endpoint - dynamic model selection
                 string apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{Model}:generateContent?key={ApiKey}";
 
+                // Build prompt with context
+                string systemPart = "You are a helpful assistant for Autodesk Revit. You help architects and engineers with their Revit models.";
+                if (!string.IsNullOrEmpty(context))
+                {
+                    systemPart += $"\n\nHere is the current Revit project context:\n{context}";
+                }
+                string fullPrompt = $"{systemPart}\n\nUser: {userMessage}";
+
                 var requestBody = new
                 {
                     contents = new[]
@@ -43,7 +56,7 @@ namespace RevitAIArchitect
                         {
                             parts = new[]
                             {
-                                new { text = $"You are a helpful assistant for Autodesk Revit. You help architects and engineers with their Revit models.\n\nUser: {userMessage}" }
+                                new { text = fullPrompt }
                             }
                         }
                     }
