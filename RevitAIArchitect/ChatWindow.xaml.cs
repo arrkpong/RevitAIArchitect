@@ -28,7 +28,7 @@ namespace RevitAIArchitect
 
         public ChatWindow() : this(null) { }
 
-        public ChatWindow(UIDocument uidoc)
+        public ChatWindow(UIDocument? uidoc)
         {
             InitializeComponent();
 
@@ -237,7 +237,7 @@ namespace RevitAIArchitect
             try
             {
                 // Build context if enabled
-                string context = null;
+                string? context = null;
                 if (IncludeContextCheck.IsChecked == true && _contextService.HasDocument)
                 {
                     context = _contextService.BuildContextString();

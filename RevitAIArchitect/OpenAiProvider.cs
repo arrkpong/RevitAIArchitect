@@ -18,7 +18,7 @@ namespace RevitAIArchitect
             return GetReplyAsync(userMessage, null);
         }
 
-        public async Task<string> GetReplyAsync(string userMessage, string context)
+        public async Task<string> GetReplyAsync(string userMessage, string? context)
         {
             if (string.IsNullOrEmpty(ApiKey))
             {

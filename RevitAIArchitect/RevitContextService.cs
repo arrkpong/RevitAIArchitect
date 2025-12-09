@@ -13,10 +13,10 @@ namespace RevitAIArchitect
     /// </summary>
     public class RevitContextService
     {
-        private readonly Document _doc;
-        private readonly UIDocument _uidoc;
+        private readonly Document? _doc;
+        private readonly UIDocument? _uidoc;
 
-        public RevitContextService(UIDocument uidoc)
+        public RevitContextService(UIDocument? uidoc)
         {
             _uidoc = uidoc;
             _doc = uidoc?.Document;

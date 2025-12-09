@@ -7,6 +7,6 @@ namespace RevitAIArchitect
         string Name { get; }
         string ApiKey { get; set; }
         Task<string> GetReplyAsync(string userMessage);
-        Task<string> GetReplyAsync(string userMessage, string context);
+        Task<string> GetReplyAsync(string userMessage, string? context);
     }
 }
