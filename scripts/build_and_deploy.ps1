@@ -27,21 +27,29 @@ Write-Host "Revit Version: $RevitVersion" -ForegroundColor Yellow
 Write-Host ""
 
 # === 2. Build Solution ===
-Write-Host "[1/3] Building Solution..." -ForegroundColor White
+Write-Host "[1/4] Building Solution..." -ForegroundColor White
 dotnet build "$SolutionDir\RevitAIArchitect.sln" --configuration $Configuration
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Build Failed. Aborting deployment."
 }
 
-# === 3. Create Target Directory ===
+# === 3. Run Tests ===
+Write-Host "[2/4] Running Tests..." -ForegroundColor White
+dotnet test "$SolutionDir\RevitAIArchitect.sln" --configuration $Configuration
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Tests Failed. Aborting deployment."
+}
+
+# === 4. Create Target Directory ===
 if (-not (Test-Path $AddinFolder)) {
     Write-Host "Creating Addins folder: $AddinFolder" -ForegroundColor Yellow
     New-Item -ItemType Directory -Force -Path $AddinFolder | Out-Null
 }
 
-# === 4. Copy Files ===
-Write-Host "[2/3] Deploying Files..." -ForegroundColor White
+# === 5. Copy Files ===
+Write-Host "[3/4] Deploying Files..." -ForegroundColor White
 
 # Copy DLL
 $DllPath = "$BuildOutput\RevitAIArchitect.dll"
@@ -62,8 +70,8 @@ Get-ChildItem $BuildOutput -Filter "*.dll" | ForEach-Object {
     }
 }
 
-# === 5. Generate Manifest (.addin) ===
-Write-Host "[3/3] Generating Manifest..." -ForegroundColor White
+# === 6. Generate Manifest (.addin) ===
+Write-Host "[4/4] Generating Manifest..." -ForegroundColor White
 
 # We point to the deployed DLL in the Addins folder
 $AssemblyPath = "$AddinFolder\RevitAIArchitect.dll"
