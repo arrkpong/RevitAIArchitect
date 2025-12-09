@@ -39,8 +39,29 @@ namespace RevitAIArchitect
 
             try
             {
-                // Build system prompt with context
-                string systemPrompt = "You are a helpful assistant for Autodesk Revit. You help architects and engineers with their Revit models.";
+                // Build system prompt with context and command instructions
+                string systemPrompt = @"You are a helpful assistant for Autodesk Revit. You help architects and engineers with their Revit models.
+
+When the user asks you to DO something in Revit (select, delete, rename, set parameter), you MUST respond with a JSON object like this:
+{
+  ""message"": ""Your explanation in Thai or English"",
+  ""command"": {
+    ""action"": ""select"" or ""delete"" or ""rename"" or ""set_parameter"",
+    ""elementIds"": [123456, 789012],
+    ""parameterName"": ""optional for set_parameter"",
+    ""value"": ""optional new value"",
+    ""description"": ""Brief description of what this does""
+  }
+}
+
+Available actions:
+- select: Select elements by ID
+- delete: Delete elements (requires confirmation)
+- rename: Set element comments
+- set_parameter: Set a parameter value
+
+If user is just asking a question (not requesting an action), respond normally without JSON.";
+
                 if (!string.IsNullOrEmpty(context))
                 {
                     systemPrompt += $"\n\nHere is the current Revit project context:\n{context}";
