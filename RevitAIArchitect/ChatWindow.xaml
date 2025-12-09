@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RevitAIArchitect"
         mc:Ignorable="d"
-        Title="Revit AI Assistant" Height="580" Width="420" WindowStartupLocation="CenterScreen" Topmost="True">
+        Title="Revit AI Assistant" Height="600" Width="450" WindowStartupLocation="CenterScreen" Topmost="True">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -61,9 +61,16 @@
             </Grid>
         </Border>
 
-        <!-- Context Toggle -->
+        <!-- Context & Verify Section -->
         <Border Grid.Row="3" Background="#FCE4EC" CornerRadius="5" Padding="8" Margin="0,0,0,10">
-            <CheckBox x:Name="IncludeContextCheck" Content="Include Revit Project Context" IsChecked="True" FontWeight="Bold"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <CheckBox x:Name="IncludeContextCheck" Grid.Column="0" Content="Include Revit Context" IsChecked="True" VerticalAlignment="Center" FontWeight="Bold"/>
+                <Button x:Name="VerifyButton" Grid.Column="1" Content="🔍 Verify Project" Width="110" Click="VerifyButton_Click"/>
+            </Grid>
         </Border>
 
         <!-- Chat History -->

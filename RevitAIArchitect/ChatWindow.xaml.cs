@@ -268,5 +268,58 @@ namespace RevitAIArchitect
                 }
             }
         }
+
+        private async void VerifyButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_contextService.HasDocument)
+            {
+                Messages.Add("System: No Revit document open. Please open a project first.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_currentProvider.ApiKey))
+            {
+                Messages.Add("System: Please enter and save your API Key first.");
+                return;
+            }
+
+            Messages.Add("System: Running verification...");
+            VerifyButton.IsEnabled = false;
+            SendButton.IsEnabled = false;
+
+            try
+            {
+                // Get verification report from Revit
+                string verificationReport = _contextService.RunVerificationReport();
+                
+                // Show raw report first
+                Messages.Add($"📋 Verification Report:\n{verificationReport}");
+
+                // Ask AI to analyze and provide recommendations
+                string aiPrompt = "Based on the verification report below, please provide:\n" +
+                                  "1. A summary of the main issues found\n" +
+                                  "2. Priority recommendations to fix them\n" +
+                                  "3. Best practices to prevent these issues\n\n" +
+                                  verificationReport;
+
+                string modelInfo = _currentProvider is GeminiProvider gp ? $" [{gp.Model}]" : "";
+                string aiResponse = await _currentProvider.GetReplyAsync(aiPrompt, null);
+                Messages.Add($"AI Analysis ({_currentProvider.Name}{modelInfo}): {aiResponse}");
+            }
+            catch (Exception ex)
+            {
+                Messages.Add($"Error during verification: {ex.Message}");
+            }
+            finally
+            {
+                VerifyButton.IsEnabled = true;
+                SendButton.IsEnabled = true;
+                // Scroll to bottom
+                if (ChatHistory.Items.Count > 0)
+                {
+                    ChatHistory.ScrollIntoView(ChatHistory.Items[ChatHistory.Items.Count - 1]);
+                }
+            }
+        }
     }
 }
