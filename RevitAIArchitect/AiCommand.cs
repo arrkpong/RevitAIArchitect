@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -35,6 +36,10 @@ namespace RevitAIArchitect
             "delete" => true,
             "rename" => true,
             "set_parameter" => true,
+            "hide" => true,
+            "isolate" => true,
+            "override_color" => true,
+            "open_view" => false,
             _ => true
         };
 
@@ -47,6 +52,10 @@ namespace RevitAIArchitect
             "delete" => "High",
             "rename" => "Medium",
             "set_parameter" => "Medium",
+            "hide" => "Medium",
+            "isolate" => "Medium",
+            "override_color" => "Medium",
+            "open_view" => "Low",
             _ => "Unknown"
         };
 
@@ -59,11 +68,11 @@ namespace RevitAIArchitect
                 return (false, "Missing action.");
 
             var action = Action.ToLowerInvariant();
-            var supported = new[] { "select", "delete", "rename", "set_parameter" };
+            var supported = new[] { "select", "delete", "rename", "set_parameter", "hide", "isolate", "override_color", "open_view" };
             if (!supported.Contains(action))
                 return (false, $"Unknown action: {Action}");
 
-            if (action == "select" || action == "delete" || action == "rename" || action == "set_parameter")
+            if (action == "select" || action == "delete" || action == "rename" || action == "set_parameter" || action == "hide" || action == "isolate" || action == "override_color")
             {
                 if (ElementIds == null || ElementIds.Count == 0)
                     return (false, "Element IDs are required.");
@@ -83,7 +92,59 @@ namespace RevitAIArchitect
                     return (false, "Value is required for set_parameter.");
             }
 
+            if (action == "override_color")
+            {
+                if (string.IsNullOrWhiteSpace(Value))
+                    return (false, "Color value is required for override_color (hex like #FF0000 or R,G,B).");
+                if (!TryParseColor(Value, out _))
+                    return (false, "Color value must be hex (#RRGGBB) or R,G,B (0-255).");
+            }
+
+            if (action == "open_view")
+            {
+                if (string.IsNullOrWhiteSpace(Value))
+                    return (false, "View ID is required for open_view.");
+                if (!int.TryParse(Value, out _))
+                    return (false, "View ID must be a number (ElementId value).");
+            }
+
             return (true, string.Empty);
+        }
+
+        /// <summary>
+        /// Parse color input to Revit color (byte r,g,b).
+        /// </summary>
+        public static bool TryParseColor(string input, out (byte r, byte g, byte b) color)
+        {
+            color = (0, 0, 0);
+            if (string.IsNullOrWhiteSpace(input)) return false;
+
+            var trimmed = input.Trim();
+            if (trimmed.StartsWith("#"))
+            {
+                trimmed = trimmed.TrimStart('#');
+                if (trimmed.Length == 6 && int.TryParse(trimmed, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int hex))
+                {
+                    byte r = (byte)((hex >> 16) & 0xFF);
+                    byte g = (byte)((hex >> 8) & 0xFF);
+                    byte b = (byte)(hex & 0xFF);
+                    color = (r, g, b);
+                    return true;
+                }
+            }
+            else
+            {
+                var parts = trimmed.Split(',');
+                if (parts.Length == 3
+                    && byte.TryParse(parts[0].Trim(), out byte r)
+                    && byte.TryParse(parts[1].Trim(), out byte g)
+                    && byte.TryParse(parts[2].Trim(), out byte b))
+                {
+                    color = (r, g, b);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
