@@ -1,0 +1,20 @@
+# Handle line endings automatically for files detected as text
+# and leave all files detected as binary untouched.
+* text=auto
+
+# Text files
+*.cs     text diff=csharp
+*.xml    text
+*.json   text
+*.md     text
+*.xaml   text
+*.csproj text
+*.sln    text eol=crlf
+
+# Binary files
+*.dll    binary
+*.pdb    binary
+*.exe    binary
+*.zip    binary
+*.rvt    binary
+*.rfa    binary

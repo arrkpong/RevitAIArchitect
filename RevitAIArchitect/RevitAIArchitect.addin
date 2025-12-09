@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Command">
+    <Name>Revit AI Architect</Name>
+    <Assembly>RevitAIArchitect.dll</Assembly>
+    <AddInId>A1B2C3D4-E5F6-4789-0123-456789ABCDEF</AddInId>
+    <FullClassName>RevitAIArchitect.Command</FullClassName>
+    <Text>Ask AI</Text>
+    <Description>Open AI Chat Assistant</Description>
+    <VendorId>ADSK</VendorId>
+    <VendorDescription>Autodesk, www.autodesk.com</VendorDescription>
+  </AddIn>
+</RevitAddIns>
