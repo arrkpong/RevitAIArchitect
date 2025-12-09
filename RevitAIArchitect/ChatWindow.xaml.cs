@@ -22,6 +22,7 @@ namespace RevitAIArchitect
         private static readonly string OpenAiKeyPath = Path.Combine(SettingsDir, "openai_key.txt");
         private static readonly string GeminiKeyPath = Path.Combine(SettingsDir, "gemini_key.txt");
         private static readonly string ProviderPath = Path.Combine(SettingsDir, "provider.txt");
+        private static readonly string GeminiModelPath = Path.Combine(SettingsDir, "gemini_model.txt");
 
         public ChatWindow()
         {
@@ -38,7 +39,8 @@ namespace RevitAIArchitect
             LoadSettings();
 
             // Add initial welcome message
-            Messages.Add($"AI: Welcome! Using {_currentProvider.Name}. Enter your API Key above if needed.");
+            string modelInfo = _currentProvider is GeminiProvider gp ? $" (Model: {gp.Model})" : "";
+            Messages.Add($"AI: Welcome! Using {_currentProvider.Name}{modelInfo}. Enter your API Key above if needed.");
         }
 
         private void LoadSettings()
@@ -53,16 +55,40 @@ namespace RevitAIArchitect
                     {
                         ProviderCombo.SelectedIndex = 1;
                         _currentProvider = _geminiProvider;
+                        ModelSection.Visibility = Visibility.Visible;
                     }
                     else
                     {
                         ProviderCombo.SelectedIndex = 0;
                         _currentProvider = _openAiProvider;
+                        ModelSection.Visibility = Visibility.Collapsed;
                     }
                 }
                 else
                 {
                     ProviderCombo.SelectedIndex = 0;
+                    ModelSection.Visibility = Visibility.Collapsed;
+                }
+
+                // Load Gemini model selection
+                if (File.Exists(GeminiModelPath))
+                {
+                    string model = File.ReadAllText(GeminiModelPath).Trim();
+                    _geminiProvider.Model = model;
+                    
+                    // Set combo box selection
+                    for (int i = 0; i < ModelCombo.Items.Count; i++)
+                    {
+                        if (ModelCombo.Items[i] is ComboBoxItem item && item.Tag?.ToString() == model)
+                        {
+                            ModelCombo.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    ModelCombo.SelectedIndex = 0; // Default to first (gemini-3-pro-preview)
                 }
 
                 // Load OpenAI key
@@ -83,6 +109,7 @@ namespace RevitAIArchitect
             catch
             {
                 ProviderCombo.SelectedIndex = 0;
+                ModelSection.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -106,10 +133,12 @@ namespace RevitAIArchitect
                 if (tag == "gemini")
                 {
                     _currentProvider = _geminiProvider;
+                    ModelSection.Visibility = Visibility.Visible;
                 }
                 else
                 {
                     _currentProvider = _openAiProvider;
+                    ModelSection.Visibility = Visibility.Collapsed;
                 }
                 UpdateApiKeyDisplay();
 
@@ -118,6 +147,23 @@ namespace RevitAIArchitect
                 {
                     EnsureSettingsDir();
                     File.WriteAllText(ProviderPath, tag);
+                }
+                catch { }
+            }
+        }
+
+        private void ModelCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ModelCombo.SelectedItem is ComboBoxItem item)
+            {
+                string model = item.Tag?.ToString() ?? "gemini-3-pro-preview";
+                _geminiProvider.Model = model;
+
+                // Save model selection
+                try
+                {
+                    EnsureSettingsDir();
+                    File.WriteAllText(GeminiModelPath, model);
                 }
                 catch { }
             }
@@ -184,9 +230,12 @@ namespace RevitAIArchitect
 
             try
             {
+                // Show model info for Gemini
+                string modelInfo = _currentProvider is GeminiProvider gp ? $" [{gp.Model}]" : "";
+                
                 // Call AI Service
                 string aiResponse = await _currentProvider.GetReplyAsync(userMessage);
-                Messages.Add($"AI ({_currentProvider.Name}): {aiResponse}");
+                Messages.Add($"AI ({_currentProvider.Name}{modelInfo}): {aiResponse}");
             }
             catch (Exception ex)
             {

@@ -11,6 +11,17 @@ namespace RevitAIArchitect
         
         public string Name => "Google Gemini";
         public string ApiKey { get; set; } = string.Empty;
+        
+        // Model selection - default to latest (gemini-3-pro-preview)
+        public string Model { get; set; } = "gemini-3-pro-preview";
+
+        // Available Gemini models
+        public static readonly string[] AvailableModels = new[]
+        {
+            "gemini-3-pro-preview",      // Latest (Preview)
+            "gemini-3-pro-image-preview", // Image generation (Preview)
+            "gemini-2.5-flash"           // Stable
+        };
 
         public async Task<string> GetReplyAsync(string userMessage)
         {
@@ -21,8 +32,8 @@ namespace RevitAIArchitect
 
             try
             {
-                // Gemini API endpoint - using latest stable model (gemini-2.5-flash)
-                string apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={ApiKey}";
+                // Gemini API endpoint - dynamic model selection
+                string apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/{Model}:generateContent?key={ApiKey}";
 
                 var requestBody = new
                 {
