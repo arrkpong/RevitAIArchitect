@@ -2,26 +2,32 @@
 
 This document outlines the planned features and improvements for Revit AI Architect.
 
-## Version 1.0 (Current)
+## Version 1.0 ✅ (Current)
 
 - [x] Basic chat interface
 - [x] OpenAI integration
-- [x] Revit Add-in command
+- [x] Google Gemini integration
+- [x] Model selection (GPT-4o, Gemini 3 Pro, etc.)
+- [x] API Key management via UI
+- [x] Revit context integration (element counts, warnings)
+- [x] Project verification with AI analysis
+- [x] Settings persistence
 
 ## Version 1.1 (Planned)
 
-- [ ] Remember conversation history across sessions
-- [ ] Support for Azure OpenAI
-- [ ] Settings UI for API key configuration
+- [ ] Conversation history across sessions
+- [ ] Export chat to file
+- [ ] Claude/Anthropic support
+- [ ] Ollama (local LLM) support
 
 ## Version 1.2 (Future)
 
-- [ ] Local LLM support (Ollama)
-- [ ] Context-aware responses (read current Revit model info)
-- [ ] Command execution from chat (e.g., "Create a wall...")
+- [ ] Command execution from chat (e.g., "Select all walls")
+- [ ] Custom verification rules
+- [ ] Multi-language UI (Thai, etc.)
 
 ## Version 2.0 (Vision)
 
-- [ ] Full Revit model integration
 - [ ] AI-powered design suggestions
-- [ ] Multi-language support
+- [ ] Automatic issue fixing
+- [ ] Integration with Revit worksharing
