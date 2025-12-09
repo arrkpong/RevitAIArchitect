@@ -13,6 +13,7 @@ namespace RevitAIArchitect
         private readonly OpenAiProvider _openAiProvider;
         private readonly GeminiProvider _geminiProvider;
         private readonly RevitContextService _contextService;
+        private readonly RevitCommandExecutor _commandExecutor;
 
         public ObservableCollection<string> Messages { get; set; }
 
@@ -37,6 +38,7 @@ namespace RevitAIArchitect
             _geminiProvider = new GeminiProvider();
             _currentProvider = _openAiProvider; // Default
             _contextService = new RevitContextService(uidoc);
+            _commandExecutor = new RevitCommandExecutor(uidoc);
 
             Messages = new ObservableCollection<string>();
             ChatHistory.ItemsSource = Messages;
@@ -314,8 +316,19 @@ namespace RevitAIArchitect
                 string modelInfo = GetCurrentModelInfo();
                 string contextIndicator = context != null ? " 📋" : "";
                 
-                string aiResponse = await _currentProvider.GetReplyAsync(userMessage, context);
-                Messages.Add($"AI ({_currentProvider.Name} [{modelInfo}]){contextIndicator}: {aiResponse}");
+                string aiOutput = await _currentProvider.GetReplyAsync(userMessage, context);
+                
+                // Parse response for commands
+                var aiResponse = AiResponse.Parse(aiOutput);
+                
+                // Show AI message
+                Messages.Add($"AI ({_currentProvider.Name} [{modelInfo}]){contextIndicator}: {aiResponse.Message}");
+                
+                // Process command if present
+                if (aiResponse.Command != null)
+                {
+                    await ProcessCommand(aiResponse.Command);
+                }
             }
             catch (Exception ex)
             {
@@ -330,6 +343,54 @@ namespace RevitAIArchitect
                 {
                     ChatHistory.ScrollIntoView(ChatHistory.Items[ChatHistory.Items.Count - 1]);
                 }
+            }
+        }
+
+        private async System.Threading.Tasks.Task ProcessCommand(AiCommand command)
+        {
+            if (!_commandExecutor.HasDocument)
+            {
+                Messages.Add("⚠️ Cannot execute command: No Revit document open.");
+                return;
+            }
+
+            // Show command info
+            string elemCount = command.ElementIds?.Count.ToString() ?? "0";
+            Messages.Add($"🤖 Command Detected: {command.Action.ToUpper()} ({elemCount} elements)");
+            Messages.Add($"📝 {command.Description}");
+
+            // Ask for confirmation if needed
+            if (command.RequiresConfirmation)
+            {
+                var result = MessageBox.Show(
+                    $"AI wants to perform: {command.Action.ToUpper()}\n\n" +
+                    $"Description: {command.Description}\n" +
+                    $"Elements: {elemCount}\n" +
+                    $"Risk Level: {command.RiskLevel}\n\n" +
+                    "Do you want to proceed?",
+                    "⚠️ Confirm AI Action",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning
+                );
+
+                if (result != MessageBoxResult.Yes)
+                {
+                    Messages.Add("❌ Command cancelled by user.");
+                    return;
+                }
+            }
+
+            // Execute command
+            Messages.Add("⏳ Executing command...");
+            var execResult = _commandExecutor.Execute(command);
+            
+            if (execResult.Success)
+            {
+                Messages.Add($"✅ {execResult.Message}");
+            }
+            else
+            {
+                Messages.Add($"❌ {execResult.Message}");
             }
         }
 
