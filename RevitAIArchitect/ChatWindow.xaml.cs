@@ -2,59 +2,132 @@ using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace RevitAIArchitect
 {
     public partial class ChatWindow : Window
     {
-        private readonly AiService _aiService;
+        private IAiProvider _currentProvider;
+        private readonly OpenAiProvider _openAiProvider;
+        private readonly GeminiProvider _geminiProvider;
+
         public ObservableCollection<string> Messages { get; set; }
-        
-        // Path to save API key locally
-        private static readonly string SettingsPath = Path.Combine(
+
+        // Path to save settings locally
+        private static readonly string SettingsDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "RevitAIArchitect",
-            "settings.txt"
+            "RevitAIArchitect"
         );
+        private static readonly string OpenAiKeyPath = Path.Combine(SettingsDir, "openai_key.txt");
+        private static readonly string GeminiKeyPath = Path.Combine(SettingsDir, "gemini_key.txt");
+        private static readonly string ProviderPath = Path.Combine(SettingsDir, "provider.txt");
 
         public ChatWindow()
         {
             InitializeComponent();
-            _aiService = new AiService();
+
+            _openAiProvider = new OpenAiProvider();
+            _geminiProvider = new GeminiProvider();
+            _currentProvider = _openAiProvider; // Default
+
             Messages = new ObservableCollection<string>();
             ChatHistory.ItemsSource = Messages;
-            
-            // Load saved API key if exists
-            LoadApiKey();
-            
+
+            // Load saved settings
+            LoadSettings();
+
             // Add initial welcome message
-            if (string.IsNullOrEmpty(_aiService.ApiKey))
-            {
-                Messages.Add("AI: Welcome! Please enter your OpenAI API Key above to get started.");
-            }
-            else
-            {
-                Messages.Add("AI: Hello! How can I help you with your Revit model today?");
-            }
+            Messages.Add($"AI: Welcome! Using {_currentProvider.Name}. Enter your API Key above if needed.");
         }
 
-        private void LoadApiKey()
+        private void LoadSettings()
         {
             try
             {
-                if (File.Exists(SettingsPath))
+                // Load provider selection
+                if (File.Exists(ProviderPath))
                 {
-                    string savedKey = File.ReadAllText(SettingsPath).Trim();
-                    if (!string.IsNullOrEmpty(savedKey))
+                    string provider = File.ReadAllText(ProviderPath).Trim();
+                    if (provider == "gemini")
                     {
-                        _aiService.ApiKey = savedKey;
-                        ApiKeyBox.Password = savedKey;
+                        ProviderCombo.SelectedIndex = 1;
+                        _currentProvider = _geminiProvider;
+                    }
+                    else
+                    {
+                        ProviderCombo.SelectedIndex = 0;
+                        _currentProvider = _openAiProvider;
                     }
                 }
+                else
+                {
+                    ProviderCombo.SelectedIndex = 0;
+                }
+
+                // Load OpenAI key
+                if (File.Exists(OpenAiKeyPath))
+                {
+                    _openAiProvider.ApiKey = File.ReadAllText(OpenAiKeyPath).Trim();
+                }
+
+                // Load Gemini key
+                if (File.Exists(GeminiKeyPath))
+                {
+                    _geminiProvider.ApiKey = File.ReadAllText(GeminiKeyPath).Trim();
+                }
+
+                // Show current provider's key in the box
+                UpdateApiKeyDisplay();
             }
             catch
             {
-                // Ignore errors loading settings
+                ProviderCombo.SelectedIndex = 0;
+            }
+        }
+
+        private void UpdateApiKeyDisplay()
+        {
+            if (_currentProvider is OpenAiProvider)
+            {
+                ApiKeyBox.Password = _openAiProvider.ApiKey;
+            }
+            else
+            {
+                ApiKeyBox.Password = _geminiProvider.ApiKey;
+            }
+        }
+
+        private void ProviderCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ProviderCombo.SelectedItem is ComboBoxItem item)
+            {
+                string tag = item.Tag?.ToString() ?? "openai";
+                if (tag == "gemini")
+                {
+                    _currentProvider = _geminiProvider;
+                }
+                else
+                {
+                    _currentProvider = _openAiProvider;
+                }
+                UpdateApiKeyDisplay();
+
+                // Save provider selection
+                try
+                {
+                    EnsureSettingsDir();
+                    File.WriteAllText(ProviderPath, tag);
+                }
+                catch { }
+            }
+        }
+
+        private void EnsureSettingsDir()
+        {
+            if (!Directory.Exists(SettingsDir))
+            {
+                Directory.CreateDirectory(SettingsDir);
             }
         }
 
@@ -69,18 +142,21 @@ namespace RevitAIArchitect
 
             try
             {
-                // Ensure directory exists
-                string dir = Path.GetDirectoryName(SettingsPath);
-                if (!Directory.Exists(dir))
+                EnsureSettingsDir();
+
+                // Save to correct file based on provider
+                if (_currentProvider is OpenAiProvider)
                 {
-                    Directory.CreateDirectory(dir);
+                    File.WriteAllText(OpenAiKeyPath, apiKey);
+                    _openAiProvider.ApiKey = apiKey;
+                }
+                else
+                {
+                    File.WriteAllText(GeminiKeyPath, apiKey);
+                    _geminiProvider.ApiKey = apiKey;
                 }
 
-                // Save API key
-                File.WriteAllText(SettingsPath, apiKey);
-                _aiService.ApiKey = apiKey;
-
-                Messages.Add("System: API Key saved successfully!");
+                Messages.Add($"System: {_currentProvider.Name} API Key saved successfully!");
             }
             catch (Exception ex)
             {
@@ -91,7 +167,7 @@ namespace RevitAIArchitect
         private async void SendButton_Click(object sender, RoutedEventArgs e)
         {
             // Check API key first
-            if (string.IsNullOrEmpty(_aiService.ApiKey))
+            if (string.IsNullOrEmpty(_currentProvider.ApiKey))
             {
                 Messages.Add("System: Please enter and save your API Key first.");
                 return;
@@ -104,12 +180,13 @@ namespace RevitAIArchitect
             Messages.Add($"You: {userMessage}");
             InputBox.Clear();
             InputBox.IsEnabled = false;
+            SendButton.IsEnabled = false;
 
             try
             {
                 // Call AI Service
-                string aiResponse = await _aiService.GetReplyAsync(userMessage);
-                Messages.Add($"AI: {aiResponse}");
+                string aiResponse = await _currentProvider.GetReplyAsync(userMessage);
+                Messages.Add($"AI ({_currentProvider.Name}): {aiResponse}");
             }
             catch (Exception ex)
             {
@@ -118,6 +195,7 @@ namespace RevitAIArchitect
             finally
             {
                 InputBox.IsEnabled = true;
+                SendButton.IsEnabled = true;
                 InputBox.Focus();
                 // Scroll to bottom
                 if (ChatHistory.Items.Count > 0)
