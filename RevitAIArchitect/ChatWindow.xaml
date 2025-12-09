@@ -63,7 +63,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <CheckBox x:Name="IncludeContextCheck" Grid.Column="0" Content="Include Revit Context" IsChecked="True" VerticalAlignment="Center" FontWeight="Bold"/>
-                <Button x:Name="VerifyButton" Grid.Column="1" Content="🔍 Verify Project" Width="110" Click="VerifyButton_Click"/>
+                <Button x:Name="VerifyButton" Grid.Column="1" Content="Verify Project" Width="110" Click="VerifyButton_Click"/>
             </Grid>
         </Border>
 

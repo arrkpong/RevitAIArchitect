@@ -44,7 +44,10 @@ namespace RevitAIArchitect
                 var lengthSpec = units.GetFormatOptions(SpecTypeId.Length);
                 sb.AppendLine($"Length Unit: {lengthSpec.GetUnitTypeId().TypeId}");
             }
-            catch { sb.AppendLine("Units: Unknown"); }
+            catch
+            {
+                sb.AppendLine("Units: Unknown");
+            }
 
             sb.AppendLine();
             sb.AppendLine("Element Counts:");
@@ -74,7 +77,10 @@ namespace RevitAIArchitect
                     if (count > 0)
                         sb.AppendLine($"- {cat.Value}: {count}");
                 }
-                catch { }
+                catch
+                {
+                    // Ignore failures for individual categories
+                }
             }
 
             sb.AppendLine();
@@ -103,7 +109,10 @@ namespace RevitAIArchitect
                     sb.AppendLine("Warnings: None");
                 }
             }
-            catch { sb.AppendLine("Warnings: Unable to retrieve"); }
+            catch
+            {
+                sb.AppendLine("Warnings: Unable to retrieve");
+            }
 
             sb.AppendLine("===");
             return sb.ToString();
@@ -132,7 +141,7 @@ namespace RevitAIArchitect
                 var warnings = _doc.GetWarnings();
                 if (warnings.Count > 0)
                 {
-                    sb.AppendLine($"⚠️ Total Warnings: {warnings.Count}");
+                    sb.AppendLine($"Total Warnings: {warnings.Count}");
                     sb.AppendLine();
 
                     var groupedWarnings = warnings
@@ -142,7 +151,7 @@ namespace RevitAIArchitect
 
                     foreach (var group in groupedWarnings)
                     {
-                        sb.AppendLine($"📌 {group.Key} ({group.Count()}):");
+                        sb.AppendLine($"{group.Key} ({group.Count()}):");
                         
                         // Show first 5 element IDs per warning type
                         int shown = 0;
@@ -166,12 +175,12 @@ namespace RevitAIArchitect
                 }
                 else
                 {
-                    sb.AppendLine("✅ No warnings found");
+                    sb.AppendLine("No warnings found");
                 }
             }
             catch (Exception ex)
             {
-                sb.AppendLine($"❌ Error checking warnings: {ex.Message}");
+                sb.AppendLine($"Error checking warnings: {ex.Message}");
             }
 
             sb.AppendLine();
@@ -193,7 +202,7 @@ namespace RevitAIArchitect
 
                 if (roomsWithoutNumber.Count > 0)
                 {
-                    sb.AppendLine($"⚠️ Rooms without Number: {roomsWithoutNumber.Count}");
+                    sb.AppendLine($"Rooms without Number: {roomsWithoutNumber.Count}");
                     foreach (var room in roomsWithoutNumber.Take(10))
                     {
                         sb.AppendLine($"   - Room ID:{room.Id.Value} (Name: {room.Name ?? "No name"})");
@@ -204,12 +213,12 @@ namespace RevitAIArchitect
                 }
                 else
                 {
-                    sb.AppendLine("✅ All rooms have numbers");
+                    sb.AppendLine("All rooms have numbers");
                 }
 
                 if (unplacedRooms.Count > 0)
                 {
-                    sb.AppendLine($"⚠️ Unplaced/Invalid Rooms: {unplacedRooms.Count}");
+                    sb.AppendLine($"Unplaced/Invalid Rooms: {unplacedRooms.Count}");
                     foreach (var room in unplacedRooms.Take(5))
                     {
                         sb.AppendLine($"   - Room ID:{room.Id.Value} ({room.Number ?? "No number"})");
@@ -218,12 +227,12 @@ namespace RevitAIArchitect
                 }
                 else
                 {
-                    sb.AppendLine("✅ All rooms are properly placed");
+                    sb.AppendLine("All rooms are properly placed");
                 }
             }
             catch (Exception ex)
             {
-                sb.AppendLine($"❌ Error checking rooms: {ex.Message}");
+                sb.AppendLine($"Error checking rooms: {ex.Message}");
             }
 
             sb.AppendLine();
@@ -235,26 +244,26 @@ namespace RevitAIArchitect
                 var duplicateMarks = CheckDuplicateTypeMarks();
                 if (duplicateMarks.Count > 0)
                 {
-                    sb.AppendLine($"⚠️ Duplicate Type Marks found: {duplicateMarks.Count} groups");
+                    sb.AppendLine($"Duplicate Type Marks found: {duplicateMarks.Count} groups");
                     foreach (var dup in duplicateMarks.Take(5))
                     {
                         sb.AppendLine($"   - Mark \"{dup.Key}\": {dup.Value.Count} instances");
                         foreach (var id in dup.Value.Take(3))
                         {
                             var elem = _doc.GetElement(id);
-                            sb.AppendLine($"      • {elem?.Name ?? "Unknown"} (ID:{id.Value})");
+                            sb.AppendLine($"      - {elem?.Name ?? "Unknown"} (ID:{id.Value})");
                         }
                     }
                     totalIssues += duplicateMarks.Count;
                 }
                 else
                 {
-                    sb.AppendLine("✅ No duplicate Type Marks found");
+                    sb.AppendLine("No duplicate Type Marks found");
                 }
             }
             catch (Exception ex)
             {
-                sb.AppendLine($"❌ Error checking duplicates: {ex.Message}");
+                sb.AppendLine($"Error checking duplicates: {ex.Message}");
             }
 
             sb.AppendLine();
@@ -263,11 +272,11 @@ namespace RevitAIArchitect
             sb.AppendLine("--- SUMMARY ---");
             if (totalIssues == 0)
             {
-                sb.AppendLine("✅ No issues found! Project looks clean.");
+                sb.AppendLine("No issues found! Project looks clean.");
             }
             else
             {
-                sb.AppendLine($"⚠️ Total Issues Found: {totalIssues}");
+                sb.AppendLine($"Total Issues Found: {totalIssues}");
                 sb.AppendLine("Please review and fix the issues listed above.");
             }
             sb.AppendLine("===");
@@ -305,7 +314,10 @@ namespace RevitAIArchitect
                         }
                     }
                 }
-                catch { }
+                catch
+                {
+                    // Ignore per-element errors
+                }
             }
 
             // Only return duplicates (more than 1)

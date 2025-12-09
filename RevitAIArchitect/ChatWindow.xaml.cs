@@ -314,7 +314,7 @@ namespace RevitAIArchitect
                 }
 
                 string modelInfo = GetCurrentModelInfo();
-                string contextIndicator = context != null ? " 📋" : "";
+                string contextIndicator = context != null ? " [with context]" : "";
                 
                 string aiOutput = await _currentProvider.GetReplyAsync(userMessage, context);
                 
@@ -350,14 +350,14 @@ namespace RevitAIArchitect
         {
             if (!_commandExecutor.HasDocument)
             {
-                Messages.Add("⚠️ Cannot execute command: No Revit document open.");
+                Messages.Add("Cannot execute command: No Revit document open.");
                 return;
             }
 
             // Show command info
             string elemCount = command.ElementIds?.Count.ToString() ?? "0";
-            Messages.Add($"🤖 Command Detected: {command.Action.ToUpper()} ({elemCount} elements)");
-            Messages.Add($"📝 {command.Description}");
+            Messages.Add($"Command detected: {command.Action.ToUpper()} ({elemCount} elements)");
+            Messages.Add($"Description: {command.Description}");
 
             // Ask for confirmation if needed
             if (command.RequiresConfirmation)
@@ -368,29 +368,29 @@ namespace RevitAIArchitect
                     $"Elements: {elemCount}\n" +
                     $"Risk Level: {command.RiskLevel}\n\n" +
                     "Do you want to proceed?",
-                    "⚠️ Confirm AI Action",
+                    "Confirm AI Action",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning
                 );
 
                 if (result != MessageBoxResult.Yes)
                 {
-                    Messages.Add("❌ Command cancelled by user.");
+                    Messages.Add("Command cancelled by user.");
                     return;
                 }
             }
 
             // Execute command
-            Messages.Add("⏳ Executing command...");
+            Messages.Add("Executing command...");
             var execResult = _commandExecutor.Execute(command);
             
             if (execResult.Success)
             {
-                Messages.Add($"✅ {execResult.Message}");
+                Messages.Add(execResult.Message);
             }
             else
             {
-                Messages.Add($"❌ {execResult.Message}");
+                Messages.Add($"Error: {execResult.Message}");
             }
         }
 
@@ -415,7 +415,7 @@ namespace RevitAIArchitect
             try
             {
                 string verificationReport = _contextService.RunVerificationReport();
-                Messages.Add($"📋 Verification Report:\n{verificationReport}");
+                Messages.Add($"Verification Report:\n{verificationReport}");
 
                 string aiPrompt = "Based on the verification report below, please provide:\n" +
                                   "1. A summary of the main issues found\n" +
