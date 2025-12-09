@@ -272,10 +272,15 @@ namespace RevitAIArchitect
             if (_uidoc == null)
                 return new CommandResult(false, "No UI document available.");
 
-            bool changed = _uidoc.RequestViewChange(view);
-            return changed
-                ? new CommandResult(true, $"Switched to view: {view.Name} (ID:{viewIdInt}).")
-                : new CommandResult(false, "Unable to switch view.");
+            try
+            {
+                _uidoc.RequestViewChange(view);
+                return new CommandResult(true, $"Requested switch to view: {view.Name} (ID:{viewIdInt}).");
+            }
+            catch (Exception ex)
+            {
+                return new CommandResult(false, $"Unable to switch view: {ex.Message}");
+            }
         }
     }
 

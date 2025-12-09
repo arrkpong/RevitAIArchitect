@@ -9,9 +9,12 @@ This document outlines the planned features and improvements for Revit AI Archit
 - [x] Google Gemini integration
 - [x] Model selection (GPT-4o, Gemini 3 Pro, etc.)
 - [x] API Key management via UI
-- [x] Revit context integration (element counts, warnings)
+- [x] Revit context integration (element counts, warnings, selection)
 - [x] Project verification with AI analysis
 - [x] Settings persistence
+- [x] Command execution: select, delete, rename, set_parameter
+- [x] Command execution: hide, isolate, override_color, open_view
+- [x] Command validation and confirmation dialogs
 
 ## Version 1.1 (Planned)
 
@@ -22,9 +25,9 @@ This document outlines the planned features and improvements for Revit AI Archit
 
 ## Version 1.2 (Future)
 
-- [ ] Command execution from chat (e.g., "Select all walls")
 - [ ] Custom verification rules
 - [ ] Multi-language UI (Thai, etc.)
+- [ ] More element commands (copy, move, mirror)
 
 ## Version 2.0 (Vision)
 
