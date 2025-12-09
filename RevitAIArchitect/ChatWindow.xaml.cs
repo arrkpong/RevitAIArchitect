@@ -24,6 +24,7 @@ namespace RevitAIArchitect
         private static readonly string OpenAiKeyPath = Path.Combine(SettingsDir, "openai_key.txt");
         private static readonly string GeminiKeyPath = Path.Combine(SettingsDir, "gemini_key.txt");
         private static readonly string ProviderPath = Path.Combine(SettingsDir, "provider.txt");
+        private static readonly string OpenAiModelPath = Path.Combine(SettingsDir, "openai_model.txt");
         private static readonly string GeminiModelPath = Path.Combine(SettingsDir, "gemini_model.txt");
 
         public ChatWindow() : this(null) { }
@@ -44,9 +45,18 @@ namespace RevitAIArchitect
             LoadSettings();
 
             // Add initial welcome message
-            string modelInfo = _currentProvider is GeminiProvider gp ? $" (Model: {gp.Model})" : "";
+            string modelInfo = GetCurrentModelInfo();
             string contextInfo = _contextService.HasDocument ? " [Revit Context Available]" : " [No Revit Document]";
-            Messages.Add($"AI: Welcome! Using {_currentProvider.Name}{modelInfo}.{contextInfo}");
+            Messages.Add($"AI: Welcome! Using {_currentProvider.Name} ({modelInfo}).{contextInfo}");
+        }
+
+        private string GetCurrentModelInfo()
+        {
+            if (_currentProvider is OpenAiProvider op)
+                return op.Model;
+            if (_currentProvider is GeminiProvider gp)
+                return gp.Model;
+            return "Unknown";
         }
 
         private void LoadSettings()
@@ -61,40 +71,28 @@ namespace RevitAIArchitect
                     {
                         ProviderCombo.SelectedIndex = 1;
                         _currentProvider = _geminiProvider;
-                        ModelSection.Visibility = Visibility.Visible;
                     }
                     else
                     {
                         ProviderCombo.SelectedIndex = 0;
                         _currentProvider = _openAiProvider;
-                        ModelSection.Visibility = Visibility.Collapsed;
                     }
                 }
                 else
                 {
                     ProviderCombo.SelectedIndex = 0;
-                    ModelSection.Visibility = Visibility.Collapsed;
                 }
 
-                // Load Gemini model selection
+                // Load OpenAI model
+                if (File.Exists(OpenAiModelPath))
+                {
+                    _openAiProvider.Model = File.ReadAllText(OpenAiModelPath).Trim();
+                }
+
+                // Load Gemini model
                 if (File.Exists(GeminiModelPath))
                 {
-                    string model = File.ReadAllText(GeminiModelPath).Trim();
-                    _geminiProvider.Model = model;
-                    
-                    // Set combo box selection
-                    for (int i = 0; i < ModelCombo.Items.Count; i++)
-                    {
-                        if (ModelCombo.Items[i] is ComboBoxItem item && item.Tag?.ToString() == model)
-                        {
-                            ModelCombo.SelectedIndex = i;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    ModelCombo.SelectedIndex = 0; // Default to first (gemini-3-pro-preview)
+                    _geminiProvider.Model = File.ReadAllText(GeminiModelPath).Trim();
                 }
 
                 // Load OpenAI key
@@ -109,14 +107,75 @@ namespace RevitAIArchitect
                     _geminiProvider.ApiKey = File.ReadAllText(GeminiKeyPath).Trim();
                 }
 
-                // Show current provider's key in the box
+                // Update UI
+                UpdateModelDropdown();
                 UpdateApiKeyDisplay();
             }
             catch
             {
                 ProviderCombo.SelectedIndex = 0;
-                ModelSection.Visibility = Visibility.Collapsed;
+                UpdateModelDropdown();
             }
+        }
+
+        private void UpdateModelDropdown()
+        {
+            ModelCombo.Items.Clear();
+            
+            if (_currentProvider is OpenAiProvider)
+            {
+                foreach (var model in OpenAiProvider.AvailableModels)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = GetOpenAiModelDisplayName(model),
+                        Tag = model
+                    };
+                    ModelCombo.Items.Add(item);
+                    if (model == _openAiProvider.Model)
+                        ModelCombo.SelectedItem = item;
+                }
+            }
+            else
+            {
+                foreach (var model in GeminiProvider.AvailableModels)
+                {
+                    var item = new ComboBoxItem
+                    {
+                        Content = GetGeminiModelDisplayName(model),
+                        Tag = model
+                    };
+                    ModelCombo.Items.Add(item);
+                    if (model == _geminiProvider.Model)
+                        ModelCombo.SelectedItem = item;
+                }
+            }
+
+            if (ModelCombo.SelectedItem == null && ModelCombo.Items.Count > 0)
+                ModelCombo.SelectedIndex = 0;
+        }
+
+        private string GetOpenAiModelDisplayName(string model)
+        {
+            return model switch
+            {
+                "gpt-4o" => "GPT-4o (Latest)",
+                "gpt-4o-mini" => "GPT-4o Mini (Fast)",
+                "gpt-4-turbo" => "GPT-4 Turbo",
+                "gpt-3.5-turbo" => "GPT-3.5 Turbo (Legacy)",
+                _ => model
+            };
+        }
+
+        private string GetGeminiModelDisplayName(string model)
+        {
+            return model switch
+            {
+                "gemini-3-pro-preview" => "Gemini 3 Pro (Latest)",
+                "gemini-3-pro-image-preview" => "Gemini 3 Pro Image",
+                "gemini-2.5-flash" => "Gemini 2.5 Flash (Stable)",
+                _ => model
+            };
         }
 
         private void UpdateApiKeyDisplay()
@@ -139,13 +198,13 @@ namespace RevitAIArchitect
                 if (tag == "gemini")
                 {
                     _currentProvider = _geminiProvider;
-                    ModelSection.Visibility = Visibility.Visible;
                 }
                 else
                 {
                     _currentProvider = _openAiProvider;
-                    ModelSection.Visibility = Visibility.Collapsed;
                 }
+                
+                UpdateModelDropdown();
                 UpdateApiKeyDisplay();
 
                 // Save provider selection
@@ -162,16 +221,28 @@ namespace RevitAIArchitect
         {
             if (ModelCombo.SelectedItem is ComboBoxItem item)
             {
-                string model = item.Tag?.ToString() ?? "gemini-3-pro-preview";
-                _geminiProvider.Model = model;
-
-                // Save model selection
-                try
+                string model = item.Tag?.ToString() ?? "";
+                
+                if (_currentProvider is OpenAiProvider)
                 {
-                    EnsureSettingsDir();
-                    File.WriteAllText(GeminiModelPath, model);
+                    _openAiProvider.Model = model;
+                    try
+                    {
+                        EnsureSettingsDir();
+                        File.WriteAllText(OpenAiModelPath, model);
+                    }
+                    catch { }
                 }
-                catch { }
+                else
+                {
+                    _geminiProvider.Model = model;
+                    try
+                    {
+                        EnsureSettingsDir();
+                        File.WriteAllText(GeminiModelPath, model);
+                    }
+                    catch { }
+                }
             }
         }
 
@@ -196,7 +267,6 @@ namespace RevitAIArchitect
             {
                 EnsureSettingsDir();
 
-                // Save to correct file based on provider
                 if (_currentProvider is OpenAiProvider)
                 {
                     File.WriteAllText(OpenAiKeyPath, apiKey);
@@ -218,7 +288,6 @@ namespace RevitAIArchitect
 
         private async void SendButton_Click(object sender, RoutedEventArgs e)
         {
-            // Check API key first
             if (string.IsNullOrEmpty(_currentProvider.ApiKey))
             {
                 Messages.Add("System: Please enter and save your API Key first.");
@@ -228,7 +297,6 @@ namespace RevitAIArchitect
             string userMessage = InputBox.Text;
             if (string.IsNullOrWhiteSpace(userMessage)) return;
 
-            // Add User Message
             Messages.Add($"You: {userMessage}");
             InputBox.Clear();
             InputBox.IsEnabled = false;
@@ -236,7 +304,6 @@ namespace RevitAIArchitect
 
             try
             {
-                // Build context if enabled
                 string? context = null;
                 if (IncludeContextCheck.IsChecked == true && _contextService.HasDocument)
                 {
@@ -244,13 +311,11 @@ namespace RevitAIArchitect
                     context += _contextService.GetSelectionInfo();
                 }
 
-                // Show model info for Gemini
-                string modelInfo = _currentProvider is GeminiProvider gp ? $" [{gp.Model}]" : "";
+                string modelInfo = GetCurrentModelInfo();
                 string contextIndicator = context != null ? " 📋" : "";
                 
-                // Call AI Service with context
                 string aiResponse = await _currentProvider.GetReplyAsync(userMessage, context);
-                Messages.Add($"AI ({_currentProvider.Name}{modelInfo}){contextIndicator}: {aiResponse}");
+                Messages.Add($"AI ({_currentProvider.Name} [{modelInfo}]){contextIndicator}: {aiResponse}");
             }
             catch (Exception ex)
             {
@@ -261,7 +326,6 @@ namespace RevitAIArchitect
                 InputBox.IsEnabled = true;
                 SendButton.IsEnabled = true;
                 InputBox.Focus();
-                // Scroll to bottom
                 if (ChatHistory.Items.Count > 0)
                 {
                     ChatHistory.ScrollIntoView(ChatHistory.Items[ChatHistory.Items.Count - 1]);
@@ -289,22 +353,18 @@ namespace RevitAIArchitect
 
             try
             {
-                // Get verification report from Revit
                 string verificationReport = _contextService.RunVerificationReport();
-                
-                // Show raw report first
                 Messages.Add($"📋 Verification Report:\n{verificationReport}");
 
-                // Ask AI to analyze and provide recommendations
                 string aiPrompt = "Based on the verification report below, please provide:\n" +
                                   "1. A summary of the main issues found\n" +
                                   "2. Priority recommendations to fix them\n" +
                                   "3. Best practices to prevent these issues\n\n" +
                                   verificationReport;
 
-                string modelInfo = _currentProvider is GeminiProvider gp ? $" [{gp.Model}]" : "";
+                string modelInfo = GetCurrentModelInfo();
                 string aiResponse = await _currentProvider.GetReplyAsync(aiPrompt, null);
-                Messages.Add($"AI Analysis ({_currentProvider.Name}{modelInfo}): {aiResponse}");
+                Messages.Add($"AI Analysis ({_currentProvider.Name} [{modelInfo}]): {aiResponse}");
             }
             catch (Exception ex)
             {
@@ -314,7 +374,6 @@ namespace RevitAIArchitect
             {
                 VerifyButton.IsEnabled = true;
                 SendButton.IsEnabled = true;
-                // Scroll to bottom
                 if (ChatHistory.Items.Count > 0)
                 {
                     ChatHistory.ScrollIntoView(ChatHistory.Items[ChatHistory.Items.Count - 1]);

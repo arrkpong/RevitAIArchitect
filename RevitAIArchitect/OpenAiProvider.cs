@@ -12,6 +12,18 @@ namespace RevitAIArchitect
         
         public string Name => "OpenAI";
         public string ApiKey { get; set; } = string.Empty;
+        
+        // Model selection - default to latest (gpt-4o)
+        public string Model { get; set; } = "gpt-4o";
+
+        // Available OpenAI models
+        public static readonly string[] AvailableModels = new[]
+        {
+            "gpt-4o",              // Latest flagship
+            "gpt-4o-mini",         // Fast & cheap
+            "gpt-4-turbo",         // Previous flagship
+            "gpt-3.5-turbo"        // Legacy fast
+        };
 
         public Task<string> GetReplyAsync(string userMessage)
         {
@@ -36,7 +48,7 @@ namespace RevitAIArchitect
 
                 var requestBody = new
                 {
-                    model = "gpt-4o",
+                    model = Model, // Use selected model
                     messages = new[]
                     {
                         new { role = "system", content = systemPrompt },
