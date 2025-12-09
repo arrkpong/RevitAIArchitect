@@ -186,6 +186,6 @@ secrets.json
 *.msm
 *.msp
 
-# Revit Addins
-*.addin
-!RevitAIArchitect/RevitAIArchitect.addin
+# --- Project Specific ---
+publish/
+release/
