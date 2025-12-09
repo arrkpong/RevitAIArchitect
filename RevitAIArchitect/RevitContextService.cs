@@ -155,6 +155,10 @@ namespace RevitAIArchitect
             sb.AppendLine();
 
             int totalIssues = 0;
+            int warningTypes = 0;
+            int roomsNoNumberCount = 0;
+            int roomsUnplacedCount = 0;
+            int duplicateGroups = 0;
 
             // 1. Warnings with Element IDs
             sb.AppendLine("--- WARNINGS ---");
@@ -171,7 +175,7 @@ namespace RevitAIArchitect
                         .OrderByDescending(g => g.Count())
                         .Take(10);
 
-                    int warningTypes = groupedWarnings.Count();
+                    warningTypes = groupedWarnings.Count();
                     foreach (var group in groupedWarnings)
                     {
                         sb.AppendLine($"{group.Key} ({group.Count()}):");
@@ -225,14 +229,15 @@ namespace RevitAIArchitect
 
                 if (roomsWithoutNumber.Count > 0)
                 {
-                    sb.AppendLine($"Rooms without Number: {roomsWithoutNumber.Count}");
+                    roomsNoNumberCount = roomsWithoutNumber.Count;
+                    sb.AppendLine($"Rooms without Number: {roomsNoNumberCount}");
                     foreach (var room in roomsWithoutNumber.Take(10))
                     {
                         sb.AppendLine($"   - Room ID:{room.Id.Value} (Name: {room.Name ?? "No name"})");
                     }
                     if (roomsWithoutNumber.Count > 10)
                         sb.AppendLine($"   ... and {roomsWithoutNumber.Count - 10} more");
-                    totalIssues += roomsWithoutNumber.Count;
+                    totalIssues += roomsNoNumberCount;
                 }
                 else
                 {
@@ -241,12 +246,13 @@ namespace RevitAIArchitect
 
                 if (unplacedRooms.Count > 0)
                 {
-                    sb.AppendLine($"Unplaced/Invalid Rooms: {unplacedRooms.Count}");
+                    roomsUnplacedCount = unplacedRooms.Count;
+                    sb.AppendLine($"Unplaced/Invalid Rooms: {roomsUnplacedCount}");
                     foreach (var room in unplacedRooms.Take(5))
                     {
                         sb.AppendLine($"   - Room ID:{room.Id.Value} ({room.Number ?? "No number"})");
                     }
-                    totalIssues += unplacedRooms.Count;
+                    totalIssues += roomsUnplacedCount;
                 }
                 else
                 {
@@ -267,7 +273,8 @@ namespace RevitAIArchitect
                 var duplicateMarks = CheckDuplicateTypeMarks();
                 if (duplicateMarks.Count > 0)
                 {
-                    sb.AppendLine($"Duplicate Type Marks found: {duplicateMarks.Count} groups");
+                    duplicateGroups = duplicateMarks.Count;
+                    sb.AppendLine($"Duplicate Type Marks found: {duplicateGroups} groups");
                     foreach (var dup in duplicateMarks.Take(5))
                     {
                         sb.AppendLine($"   - Mark \"{dup.Key}\": {dup.Value.Count} instances");
@@ -277,7 +284,7 @@ namespace RevitAIArchitect
                             sb.AppendLine($"      - {elem?.Name ?? "Unknown"} (ID:{id.Value})");
                         }
                     }
-                    totalIssues += duplicateMarks.Count;
+                    totalIssues += duplicateGroups;
                 }
                 else
                 {
@@ -299,8 +306,19 @@ namespace RevitAIArchitect
             }
             else
             {
-                sb.AppendLine($"Total Issues Found: {totalIssues}");
-                sb.AppendLine("Please review and fix the issues listed above.");
+                sb.AppendLine($"Total Issues Found (by category): {totalIssues}");
+                if (warningTypes > 0)
+                    sb.AppendLine($"- High: {warningTypes} warning type(s) present");
+                if (roomsNoNumberCount + roomsUnplacedCount > 0)
+                    sb.AppendLine($"- Medium: {roomsNoNumberCount} rooms without number, {roomsUnplacedCount} unplaced/invalid rooms");
+                if (duplicateGroups > 0)
+                    sb.AppendLine($"- Medium: {duplicateGroups} duplicate Type Mark group(s)");
+                sb.AppendLine("Priorities:");
+                sb.AppendLine("1) Resolve warnings with IDs shown");
+                if (roomsNoNumberCount + roomsUnplacedCount > 0)
+                    sb.AppendLine("2) Fix room numbering/placement");
+                if (duplicateGroups > 0)
+                    sb.AppendLine("3) Clean up duplicate Type Marks");
             }
             sb.AppendLine("===");
 
