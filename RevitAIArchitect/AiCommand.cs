@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -48,6 +49,42 @@ namespace RevitAIArchitect
             "set_parameter" => "Medium",
             _ => "Unknown"
         };
+
+        /// <summary>
+        /// Basic validation before executing the command.
+        /// </summary>
+        public (bool IsValid, string Error) Validate()
+        {
+            if (string.IsNullOrWhiteSpace(Action))
+                return (false, "Missing action.");
+
+            var action = Action.ToLowerInvariant();
+            var supported = new[] { "select", "delete", "rename", "set_parameter" };
+            if (!supported.Contains(action))
+                return (false, $"Unknown action: {Action}");
+
+            if (action == "select" || action == "delete" || action == "rename" || action == "set_parameter")
+            {
+                if (ElementIds == null || ElementIds.Count == 0)
+                    return (false, "Element IDs are required.");
+            }
+
+            if (action == "rename")
+            {
+                if (string.IsNullOrWhiteSpace(Value))
+                    return (false, "New name/value is required for rename.");
+            }
+
+            if (action == "set_parameter")
+            {
+                if (string.IsNullOrWhiteSpace(ParameterName))
+                    return (false, "Parameter name is required for set_parameter.");
+                if (Value == null)
+                    return (false, "Value is required for set_parameter.");
+            }
+
+            return (true, string.Empty);
+        }
     }
 
     /// <summary>

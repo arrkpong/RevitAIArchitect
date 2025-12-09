@@ -348,6 +348,13 @@ namespace RevitAIArchitect
 
         private System.Threading.Tasks.Task ProcessCommand(AiCommand command)
         {
+            var (isValid, validationError) = command.Validate();
+            if (!isValid)
+            {
+                Messages.Add($"Command rejected: {validationError}");
+                return System.Threading.Tasks.Task.CompletedTask;
+            }
+
             if (!_commandExecutor.HasDocument)
             {
                 Messages.Add("Cannot execute command: No Revit document open.");
@@ -358,6 +365,13 @@ namespace RevitAIArchitect
             string elemCount = command.ElementIds?.Count.ToString() ?? "0";
             Messages.Add($"Command detected: {command.Action.ToUpper()} ({elemCount} elements)");
             Messages.Add($"Description: {command.Description}");
+
+            // Guard against overly large element lists
+            if (command.ElementIds != null && command.ElementIds.Count > 1000)
+            {
+                Messages.Add("Command rejected: element list too large (>1000).");
+                return System.Threading.Tasks.Task.CompletedTask;
+            }
 
             // Ask for confirmation if needed
             if (command.RequiresConfirmation)
