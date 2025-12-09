@@ -1,63 +1,142 @@
-# Revit AI Architect
+# RevitAIArchitect
 
-A powerful Revit Add-in that integrates AI capabilities directly into the Revit environment.
+<div align="center">
 
-## Features
+![Revit](https://img.shields.io/badge/Revit-2026-blue?style=for-the-badge&logo=autodesk)
+![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-- **Multi-AI Provider Support:** Choose between OpenAI (GPT-4o) and Google Gemini
-- **Model Selection:** Select from multiple models for each provider
-- **Revit Context Integration:** AI can access your project info (elements, warnings)
-- **Project Verification:** Automated checks for common Revit issues
-- **WPF Interface:** Modern, responsive chat interface
-- **Persistent Settings:** API keys and preferences saved locally
+**AI-powered assistant for Autodesk Revit with multi-provider support**
 
-## Supported Models
+</div>
+
+---
+
+## ✨ Features
+
+- 🤖 **Multi-AI Provider** - OpenAI (GPT-4o) and Google Gemini support
+- 🔄 **Model Selection** - Choose from multiple models per provider
+- 📋 **Revit Context** - AI can access project info, element counts, warnings
+- 🔍 **Project Verification** - Automated checks with AI analysis
+- 💾 **Persistent Settings** - API keys and preferences saved locally
+- 🎨 **Modern UI** - Clean WPF chat interface
+
+## 🤖 Supported Models
 
 ### OpenAI
 
-- GPT-4o (Latest)
-- GPT-4o Mini (Fast)
-- GPT-4 Turbo
-- GPT-3.5 Turbo (Legacy)
+| Model           | Description               |
+| --------------- | ------------------------- |
+| `gpt-4o`        | Latest flagship (Default) |
+| `gpt-4o-mini`   | Fast & affordable         |
+| `gpt-4-turbo`   | Previous flagship         |
+| `gpt-3.5-turbo` | Legacy                    |
 
 ### Google Gemini
 
-- Gemini 3 Pro (Latest)
-- Gemini 3 Pro Image
-- Gemini 2.5 Flash (Stable)
+| Model                        | Description      |
+| ---------------------------- | ---------------- |
+| `gemini-3-pro-preview`       | Latest (Default) |
+| `gemini-3-pro-image-preview` | Image generation |
+| `gemini-2.5-flash`           | Stable & fast    |
 
-## Getting Started
+## 📋 Context Data
 
-### Prerequisites
+When enabled, AI receives:
+| Data | Description |
+|------|-------------|
+| `Project` | Name and file path |
+| `Elements` | Count by category (Walls, Doors, etc.) |
+| `Warnings` | Top warnings with element IDs |
+| `Selection` | Currently selected elements |
 
-- Autodesk Revit 2026
-- Visual Studio 2022 (with .NET Desktop Development workload)
-- OpenAI or Google Gemini API Key
+## 📁 Project Structure
 
-### Installation
+```
+RevitAIArchitect/
+├── RevitAIArchitect/
+│   ├── Command.cs              # IExternalCommand entry point
+│   ├── ChatWindow.xaml         # WPF chat interface
+│   ├── ChatWindow.xaml.cs      # UI logic
+│   ├── IAiProvider.cs          # Provider interface
+│   ├── OpenAiProvider.cs       # OpenAI implementation
+│   ├── GeminiProvider.cs       # Gemini implementation
+│   ├── RevitContextService.cs  # Revit data extraction
+│   └── RevitAIArchitect.csproj
+├── RevitAIArchitect.Tests/     # Unit tests (xUnit)
+├── scripts/
+│   └── build_and_deploy.ps1    # Build & deploy script
+├── docs/
+│   ├── USER_GUIDE.md           # English user guide
+│   └── USER_GUIDE.th.md        # Thai user guide
+└── README.md
+```
 
-1. Clone this repository
-2. Open `RevitAIArchitect.sln` in Visual Studio
-3. Build the solution
-4. Run `.\scripts\build_and_deploy.ps1`
+## 🔧 Requirements
 
-### Usage
+- **.NET 8 SDK** (Windows x64)
+- **Autodesk Revit 2026**
+- **API Key** from OpenAI or Google AI Studio
 
-1. Open Revit 2026
-2. Navigate to **Add-Ins** → **External Tools** → **Ask AI**
-3. Select your AI Provider and Model
-4. Enter your API Key and click Save
+## 🚀 Build
+
+```powershell
+cd RevitAIArchitect
+dotnet build
+```
+
+## 📦 Install / Deploy
+
+### Option 1: Script (Recommended)
+
+```powershell
+.\scripts\build_and_deploy.ps1
+```
+
+### Option 2: Manual
+
+1. Build the solution
+2. Copy `RevitAIArchitect.dll` to `%AppData%\Autodesk\Revit\Addins\2026\`
+3. Copy `.addin` manifest to the same folder
+4. Restart Revit
+
+## 🎮 Usage
+
+1. Open Revit → **Add-Ins** → **External Tools** → **Ask AI**
+2. Select **AI Provider** (OpenAI or Gemini)
+3. Select **Model**
+4. Enter **API Key** and click Save
 5. Start chatting!
 
 ### Verify Project
 
-Click **🔍 Verify Project** to:
+1. Check ✅ **Include Revit Context**
+2. Click **🔍 Verify Project**
+3. View report with:
+   - Warnings and affected elements
+   - Rooms without numbers
+   - Duplicate Type Marks
+4. AI provides analysis and recommendations
 
-- Check for warnings with affected elements
-- Find rooms without numbers
-- Detect duplicate Type Marks
-- Get AI recommendations for fixes
+## 🛠 Development Notes
 
-## License
+- Settings stored in `%AppData%\RevitAIArchitect\`
+- API Key files: `openai_key.txt`, `gemini_key.txt`
+- Model selection files: `openai_model.txt`, `gemini_model.txt`
+- Revit API references set to `Private=false`
 
-MIT License - see LICENSE file for details.
+## 🧪 Testing
+
+```powershell
+dotnet test
+```
+
+14 unit tests covering:
+
+- Provider names and defaults
+- Model selection
+- API key handling
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
