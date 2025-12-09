@@ -21,8 +21,8 @@ namespace RevitAIArchitect
 
             try
             {
-                // Gemini API endpoint
-                string apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={ApiKey}";
+                // Gemini API endpoint - using latest stable model
+                string apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent?key={ApiKey}";
 
                 var requestBody = new
                 {
