@@ -335,6 +335,7 @@ namespace RevitAIArchitect
         public string GetSelectionInfo()
         {
             if (_uidoc == null) return string.Empty;
+            if (_doc == null) return string.Empty;
 
             try
             {

@@ -346,12 +346,12 @@ namespace RevitAIArchitect
             }
         }
 
-        private async System.Threading.Tasks.Task ProcessCommand(AiCommand command)
+        private System.Threading.Tasks.Task ProcessCommand(AiCommand command)
         {
             if (!_commandExecutor.HasDocument)
             {
                 Messages.Add("Cannot execute command: No Revit document open.");
-                return;
+                return System.Threading.Tasks.Task.CompletedTask;
             }
 
             // Show command info
@@ -376,7 +376,7 @@ namespace RevitAIArchitect
                 if (result != MessageBoxResult.Yes)
                 {
                     Messages.Add("Command cancelled by user.");
-                    return;
+                    return System.Threading.Tasks.Task.CompletedTask;
                 }
             }
 
@@ -392,6 +392,8 @@ namespace RevitAIArchitect
             {
                 Messages.Add($"Error: {execResult.Message}");
             }
+
+            return System.Threading.Tasks.Task.CompletedTask;
         }
 
         private async void VerifyButton_Click(object sender, RoutedEventArgs e)
