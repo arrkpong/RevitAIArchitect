@@ -1,142 +1,109 @@
 # RevitAIArchitect
 
-<div align="center">
-
-![Revit](https://img.shields.io/badge/Revit-2026-blue?style=for-the-badge&logo=autodesk)
-![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-
-**AI-powered assistant for Autodesk Revit with multi-provider support**
-
-</div>
+AI-powered assistant for Autodesk Revit with multi-provider support.
 
 ---
 
-## ✨ Features
+## Features
+- Multi-AI Provider: OpenAI (GPT-4o) and Google Gemini
+- Model Selection per provider
+- Revit Context: project info, element counts, warnings, selection info
+- Project Verification: automated checks + AI analysis with priorities
+- Command Execution with Safety: select/delete/rename/set_parameter + hide/isolate/override_color/open_view (validation + confirmation)
+- Persistent Settings stored locally
+- Build & Deploy Script includes `dotnet test` before deploy
 
-- 🤖 **Multi-AI Provider** - OpenAI (GPT-4o) and Google Gemini support
-- 🔄 **Model Selection** - Choose from multiple models per provider
-- 📋 **Revit Context** - AI can access project info, element counts, warnings
-- 🔍 **Project Verification** - Automated checks with AI analysis
-- 💾 **Persistent Settings** - API keys and preferences saved locally
-- 🎨 **Modern UI** - Clean WPF chat interface
+## Supported Models
+**OpenAI**
+- gpt-4o (default)
+- gpt-4o-mini
+- gpt-4-turbo
+- gpt-3.5-turbo
 
-## 🤖 Supported Models
+**Google Gemini**
+- gemini-3-pro-preview (default)
+- gemini-3-pro-image-preview
+- gemini-2.5-flash
 
-### OpenAI
-
-| Model           | Description               |
-| --------------- | ------------------------- |
-| `gpt-4o`        | Latest flagship (Default) |
-| `gpt-4o-mini`   | Fast & affordable         |
-| `gpt-4-turbo`   | Previous flagship         |
-| `gpt-3.5-turbo` | Legacy                    |
-
-### Google Gemini
-
-| Model                        | Description      |
-| ---------------------------- | ---------------- |
-| `gemini-3-pro-preview`       | Latest (Default) |
-| `gemini-3-pro-image-preview` | Image generation |
-| `gemini-2.5-flash`           | Stable & fast    |
-
-## 📋 Context Data
-
+## Context Data (Include Revit Context)
 When enabled, AI receives:
-| Data | Description |
-|------|-------------|
-| `Project` | Name and file path |
-| `Elements` | Count by category (Walls, Doors, etc.) |
-| `Warnings` | Top warnings with element IDs |
-| `Selection` | Currently selected elements |
+- Project: name, file path, Revit version
+- Active view: view name and phase (when available)
+- Units: length unit
+- Elements: count by category (Walls, Doors, Windows, Floors, etc.)
+- Warnings: top warning messages with counts
+- Selection: selected elements (Category/Name/Type/ID, up to 10 items)
 
-## 📁 Project Structure
-
+## Project Structure
 ```
 RevitAIArchitect/
-├── RevitAIArchitect/
-│   ├── Command.cs              # IExternalCommand entry point
-│   ├── ChatWindow.xaml         # WPF chat interface
-│   ├── ChatWindow.xaml.cs      # UI logic
-│   ├── IAiProvider.cs          # Provider interface
-│   ├── OpenAiProvider.cs       # OpenAI implementation
-│   ├── GeminiProvider.cs       # Gemini implementation
-│   ├── RevitContextService.cs  # Revit data extraction
-│   └── RevitAIArchitect.csproj
-├── RevitAIArchitect.Tests/     # Unit tests (xUnit)
-├── scripts/
-│   └── build_and_deploy.ps1    # Build & deploy script
-├── docs/
-│   ├── USER_GUIDE.md           # English user guide
-│   └── USER_GUIDE.th.md        # Thai user guide
-└── README.md
+├─ RevitAIArchitect/               # Add-in source
+│  ├─ Command.cs                   # IExternalCommand entry point
+│  ├─ ChatWindow.xaml(.cs)         # WPF chat UI
+│  ├─ IAiProvider.cs               # Provider interface
+│  ├─ OpenAiProvider.cs            # OpenAI implementation
+│  ├─ GeminiProvider.cs            # Gemini implementation
+│  ├─ AiCommand.cs                 # AI command schema/validation
+│  ├─ RevitCommandExecutor.cs      # Executes AI commands in Revit
+│  ├─ RevitContextService.cs       # Extracts context/verification info
+│  └─ RevitAIArchitect.csproj
+├─ RevitAIArchitect.Tests/         # Unit tests (xUnit)
+├─ scripts/
+│  └─ build_and_deploy.ps1         # Build/test/deploy script
+├─ docs/
+│  ├─ USER_GUIDE.md                # English guide
+│  └─ USER_GUIDE.th.md             # Thai guide
+└─ README.md
 ```
 
-## 🔧 Requirements
+## Requirements
+- .NET 8 SDK (Windows x64)
+- Autodesk Revit 2026
+- API Key from OpenAI or Google AI Studio
 
-- **.NET 8 SDK** (Windows x64)
-- **Autodesk Revit 2026**
-- **API Key** from OpenAI or Google AI Studio
-
-## 🚀 Build
-
+## Build
 ```powershell
 cd RevitAIArchitect
 dotnet build
 ```
 
-## 📦 Install / Deploy
-
-### Option 1: Script (Recommended)
-
+## Install / Deploy
+### Script (Recommended)
 ```powershell
 .\scripts\build_and_deploy.ps1
 ```
 
-### Option 2: Manual
-
+### Manual
 1. Build the solution
 2. Copy `RevitAIArchitect.dll` to `%AppData%\Autodesk\Revit\Addins\2026\`
 3. Copy `.addin` manifest to the same folder
 4. Restart Revit
 
-## 🎮 Usage
-
-1. Open Revit → **Add-Ins** → **External Tools** → **Ask AI**
-2. Select **AI Provider** (OpenAI or Gemini)
-3. Select **Model**
-4. Enter **API Key** and click Save
-5. Start chatting!
+## Usage
+1. Open Revit → Add-Ins → External Tools → Ask AI
+2. Select AI Provider and Model
+3. Enter API Key and click Save
+4. Tick **Include Revit Context** if you want to share project context
+5. Send your question or request
 
 ### Verify Project
-
-1. Check ✅ **Include Revit Context**
-2. Click **🔍 Verify Project**
-3. View report with:
-   - Warnings and affected elements
-   - Rooms without numbers
-   - Duplicate Type Marks
+1. Tick **Include Revit Context**
+2. Click **Verify Project**
+3. View report with warnings (by type), room issues, duplicate Type Marks, and priorities
 4. AI provides analysis and recommendations
 
-## 🛠 Development Notes
-
+## Development Notes
 - Settings stored in `%AppData%\RevitAIArchitect\`
-- API Key files: `openai_key.txt`, `gemini_key.txt`
-- Model selection files: `openai_model.txt`, `gemini_model.txt`
+- API keys: `openai_key.txt`, `gemini_key.txt`
+- Model selections: `openai_model.txt`, `gemini_model.txt`
 - Revit API references set to `Private=false`
 
-## 🧪 Testing
-
+## Testing
+Run the full suite:
 ```powershell
 dotnet test
 ```
+Includes provider defaults, model selection, API key handling, and AI command validation.
 
-14 unit tests covering:
-
-- Provider names and defaults
-- Model selection
-- API key handling
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
+## License
+MIT License - see [LICENSE](LICENSE).
